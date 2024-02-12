@@ -10,16 +10,16 @@ fun main() {
     graph.addEdge("LA", "ShenZhen", 5.0)
 
     println(graph.getVertices())
-    println(shortestPath(graph,"Orlando", "ShenZhen"))
+    println(shortestPath(graph,"ShenZhen", "Orlando"))
 }
 
 /**
  * shortestPath finds the shortest path [from] to [to] using Dijkstra's algorithm.
  * @param from the vertex to start from
  * @param to the vertex to end at
- * @return a [Pair] contain the path of vertices, inclusively containing the start and end, and the total cost of the shortest path [from] to [to].
+ * @return a [Pair] contain the path of vertices, inclusively containing the start and end, and the total cost of the shortest path [from] to [to]. If a path does not exist, returns null.
  */
-fun <VertexType> shortestPath(graph: SearchableGraph<VertexType>, from:VertexType, to: VertexType): Pair<List<VertexType>, Double> {
+fun <VertexType> shortestPath(graph: SearchableGraph<VertexType>, from:VertexType, to: VertexType): Pair<List<VertexType>, Double>? {
     val vertices = graph.getVertices()
 
     if (!vertices.contains(from)) throw IllegalArgumentException("$from does not exist in graph")
@@ -65,6 +65,8 @@ fun <VertexType> shortestPath(graph: SearchableGraph<VertexType>, from:VertexTyp
 
         current = queue.next()
     }
+
+    if (prev[to] == null) return null
 
     // now reconstruct path
     val path = mutableListOf(to)
