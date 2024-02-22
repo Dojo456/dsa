@@ -12,7 +12,6 @@ fun main() {
     println(graph.getVertices())
     println(shortestPath(graph,"ShenZhen", "Orlando"))
 }
-
 /**
  * shortestPath finds the shortest path [from] to [to] using Dijkstra's algorithm.
  * @param from the vertex to start from
