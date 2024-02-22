@@ -1,7 +1,12 @@
 package sorter
 
+import java.util.*
+import kotlin.collections.ArrayDeque
 import kotlin.math.pow
 
+/**
+ * mergeSort has a time complexity of O(NlogN)
+ */
 fun <T: Comparable<T>> mergeSort(list: List<T>): List<T> {
     if (list.size < 2) {
         return list
@@ -9,16 +14,18 @@ fun <T: Comparable<T>> mergeSort(list: List<T>): List<T> {
 
     val center = list.size / 2
 
-    val firstPart = ArrayDeque(mergeSort(list.subList(0, center)))
-    val secondPart = ArrayDeque(mergeSort(list.subList(center, list.size)))
+    val firstPart = LinkedList(mergeSort(list.subList(0, center)))
+    val secondPart = LinkedList(mergeSort(list.subList(center, list.size)).toMutableList())
     val parts = arrayOf(firstPart, secondPart)
 
     val sorted = mutableListOf<T>()
 
-    while (!firstPart.isEmpty() || !secondPart.isEmpty()) {
+    while (firstPart.isNotEmpty() || secondPart.isNotEmpty()) {
         val first = firstPart.firstOrNull()
         val second = secondPart.firstOrNull()
 
+        // chosen is used to either take from the left half or right half of tree.
+        // left is 0, right is 1
         val chosen: Int = if (first == null) {
             1
         } else if (second == null) {
@@ -35,6 +42,9 @@ fun <T: Comparable<T>> mergeSort(list: List<T>): List<T> {
     return sorted
 }
 
+/**
+ * selectionSort has a time complexity of O(N^2)
+ */
 fun <T: Comparable<T>> selectionSort(list: List<T>): List<T> {
     val sorted = list.toMutableList()
 
@@ -54,6 +64,9 @@ fun <T: Comparable<T>> selectionSort(list: List<T>): List<T> {
     return sorted
 }
 
+/**
+ * quickSort has a time complexity of O(N^2), however its average case is NlogN
+ */
 fun <T: Comparable<T>> quickSort(list: List<T>): List<T> {
     return recurseQuickSort(list.toMutableList())
 }
@@ -84,34 +97,37 @@ private fun <T: Comparable<T>> recurseQuickSort(list: MutableList<T>): List<T> {
     return list
 }
 
+/**
+ * radixSort has a time complexity of O(N)
+ */
 fun radixSort(list: List<Int>): List<Int> {
     val buckets = Array(10) { ArrayDeque<Int>() }
     val sorted = list.toMutableList()
 
-    var done = false
     var power = 0
 
-    while (!done) {
-        done = true
+    while (true) {
+        var greaterThanAll = true
 
         for (elem in sorted) {
-            val truncated: Int = (elem.toDouble() / 10.0.pow(power)).toInt()
-
-            if (truncated == 0) {
-                continue
-            }
+            val divideBy = 10.0.pow(power).toInt()
+            val truncated: Int = elem / divideBy
 
             val digit = truncated % 10
 
             buckets[digit].addFirst(elem)
-            done = false
+            greaterThanAll = greaterThanAll && divideBy > elem
+        }
+
+        if (greaterThanAll) {
+            break
         }
 
         sorted.clear()
 
         for (bucket in buckets) {
             while (!bucket.isEmpty()) {
-                sorted.addFirst(bucket.removeLast())
+                sorted.addLast(bucket.removeLast())
             }
         }
 

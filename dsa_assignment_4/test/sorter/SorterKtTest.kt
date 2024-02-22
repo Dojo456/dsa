@@ -11,7 +11,7 @@ class SorterKtTest {
     }
 
     @org.junit.jupiter.api.Test
-    fun heapSort() {
+    fun mergeSort() {
         val sorted = mergeSort(list)
         assertEquals(sorted.sorted(), sorted)
     }

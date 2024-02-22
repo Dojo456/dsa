@@ -1,0 +1,41 @@
+---
+title: "Time Complexity Analysis"
+author: "Daniel Liao"
+date: "2024-02-22"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Loading Data
+
+Time complexity analysis will be performed using mainly visual methods using R. First, measurement data is loaded and cleaned.
+
+```{r}
+df <- read.csv("results.csv")
+
+df$Algorithm <- as.factor(df$Algorithm)
+```
+
+Plots can easily be created using the ggplot2 library.
+
+```{r}
+library(ggplot2)
+
+runtimes_plot <- ggplot(df, aes(x = Size, y = Time, colour = Algorithm)) +
+  geom_line() +
+  geom_point() +
+  ggtitle("Run Time Over List Size") +
+  xlab("List Size (n)") +
+  ylab("Time (ms)")
+runtimes_plot
+```
+
+From this plot, we can see that the selection sort has a significantly slower time complexity compared to the other algorithms implemented. The maximum list size ran using selection sort was reduced to prevent extremely long runtimes in data collection. To better view the behavior of the other three algorithms, we will plot them again without selection sort.
+
+```{r}
+df_without_selection <- df[df$Algorithm != "Selection Sort",]
+runtimes_plot %+% df_without_selection
+```
+
+From this, it appears that quick sort and radix sort both have time complexities of $O(n log n)$. Merge sort's time complexity more closely resembles $O(n^2)$, which is unexpected. This could be due to the specific implementation of merge sort. Potentially during the merge step, the operations surrounding lists have time complexities greater than $O(1)$. 
