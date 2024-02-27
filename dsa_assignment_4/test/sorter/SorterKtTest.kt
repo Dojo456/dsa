@@ -38,5 +38,8 @@ class SorterKtTest {
 
         val sorted = radixSort(list)
         assertEquals(sorted.sorted(), sorted)
+
+        val unsorted = (0..101).toList().shuffled()
+        assertEquals(unsorted.sorted(), radixSort(unsorted))
     }
 }
