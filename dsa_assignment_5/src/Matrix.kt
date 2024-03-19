@@ -1,13 +1,17 @@
 class Matrix(private val size: Int) {
      private var values: Array<Array<Int>>
+     private var xLabels: List<String>? = null
+     private var yLabels: List<String>? = null
      private var square = true
 
      init {
          values = Array(size){ Array(size){ 0 } }
      }
 
-    constructor(values: Array<Array<Int>>): this(values.size) {
+    constructor(values: Array<Array<Int>>, xLabels: List<String>? = null, yLabels: List<String>? = null): this(values.size) {
         this.values = values
+        this.xLabels = xLabels
+        this.yLabels = yLabels
         square = false
     }
 
@@ -162,7 +166,12 @@ class Matrix(private val size: Int) {
     }
 
     override fun toString(): String {
-        return (values.mapIndexed { i, row -> row.joinToString(separator = "", prefix = i.toString(), postfix = "\n"){cell -> "[$cell]"} }).joinToString(separator = "")
+        return (xLabels?.joinToString("") { e -> "$e${" ".repeat(4-e.length)}" } ?: "") + "\n" + (values.mapIndexed { i, row ->
+            row.joinToString(separator = "", prefix = yLabels?.get(i)?.let { label -> "${" ".repeat(1-label.length)}$label" } ?: "", postfix = "\n"){ cell ->
+                val asString = "$cell"
+
+                "[${" ".repeat(3-asString.length)}$asString]"
+        }}).joinToString(separator = "")
     }
 
     override fun equals(other: Any?): Boolean {
