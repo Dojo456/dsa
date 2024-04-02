@@ -2,6 +2,9 @@ import org.junit.jupiter.api.Test
 
 import java.io.File
 
+/**
+ * Builds a Markov Chain based on Dune and output 5 sentences based on it.
+ */
 class MarkovChainTest {
 
     @Test

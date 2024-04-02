@@ -5,6 +5,7 @@ class MarkovChain(val text: String, private val n: Int = 2) {
     private val startNGrams = mutableSetOf<String>()
     init {
         val counts = mutableMapOf<String, MutableMap<String, Int>>()
+        // split string into words, and ensure each word is actually valid and contains at least one letter
         val tokens = text.replace(Regex("[\r\n]"), " ").split(Regex("[ \n\r]")).filter {
             it.contains(Regex("[a-zA-Z]"))
         }
@@ -72,6 +73,6 @@ class MarkovChain(val text: String, private val n: Int = 2) {
             }
         }
 
-        return "?" // if never seen before ngram, just end sentence
+        return "." // if never seen before ngram, just end sentence
     }
 }
