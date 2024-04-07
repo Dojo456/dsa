@@ -1,7 +1,14 @@
+import kotlinx.serialization.Serializable
+import java.io.File
 import kotlin.math.pow
 import kotlin.random.Random
 
 fun main() {
+//    testHashTable()
+    generateHailey()
+}
+
+fun testHashTable() {
     // Test case 1, list of 1,000 random numbers
     println("Case 1")
     testCollisions(List(1000){Random.nextInt()})
@@ -25,4 +32,16 @@ fun testCollisions(numbers: List<Int>) {
 
     println("With primes ${"%.2f".format(primeHashTable.collisions.average())}")
     println("With custom size ${"%.2f".format(customBucketSize.collisions.average())}")
+}
+
+fun generateHailey() {
+    val text = File("texts/cerley - [cerley,angelicy]").readText()
+
+    val chain = MarkovChain(text, 2)
+
+    println(chain.generateSentence())
+    println(chain.generateSentence())
+    println(chain.generateSentence())
+    println(chain.generateSentence())
+    println(chain.generateSentence())
 }
