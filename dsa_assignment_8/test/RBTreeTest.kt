@@ -1,8 +1,10 @@
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class RBTreeTest {
 
-    @org.junit.jupiter.api.Test
+    @Test
     fun insert() {
         val tree = RBTree(2)
         tree.insert(0)
@@ -15,7 +17,7 @@ class RBTreeTest {
         assertFalse(tree.lookup(5))
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     fun lookup() {
         val tree = RBTree(2)
         tree.insert(0)
@@ -26,5 +28,15 @@ class RBTreeTest {
         assertTrue(tree.lookup(1))
         assertFalse(tree.lookup(4))
         assertFalse(tree.lookup(5))
+    }
+
+    @Test
+    fun balance() {
+        val tree = RBTree()
+        for (i in 0..10) {
+            tree.insert((Random.nextFloat() * 100).toInt())
+        }
+
+        println(tree)
     }
 }

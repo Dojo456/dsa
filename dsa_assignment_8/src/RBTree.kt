@@ -3,10 +3,10 @@ import java.io.PrintStream
 import kotlin.math.max
 import kotlin.math.pow
 
-class RBTree<T: Comparable<T>>(): BinaryTree<T> {
+class RBTree(): BinaryTree {
     object BTreePrinter { // copied this from https://stackoverflow.com/a/4973083/12021982
         private lateinit var output: PrintStream
-        fun <T : Comparable<T>> printTree(tree: RBTree<T>): String {
+        fun printTree(tree: RBTree): String {
             val root = tree.root
             val maxLevel = maxLevel(root)
             val stream = ByteArrayOutputStream()
@@ -16,7 +16,7 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             return stream.toString()
         }
 
-        private fun <T : Comparable<T>> printNodeInternal(nodes: List<Node<T>?>, level: Int, maxLevel: Int): String {
+        private fun printNodeInternal(nodes: List<Node>, level: Int, maxLevel: Int): String {
             if (nodes.isEmpty() || isAllElementsNull(nodes)) return ""
 
             val floor = maxLevel - level
@@ -26,15 +26,21 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
 
             printWhitespaces(firstSpaces)
 
-            val newNodes: MutableList<Node<T>?> = ArrayList()
+            val newNodes: MutableList<Node> = ArrayList()
             for (node in nodes) {
-                if (node != null) {
-                    output.print(node.value)
+                if (node != Node.NIL) {
+                    // Everything after this is in red
+                    val red = "\u001b[31m"
+
+                    // Resets previous color codes
+                    val reset = "\u001b[0m"
+
+                    output.print(if (node.color == Node.Color.RED) "$red${node.value}$reset" else "${node.value}")
                     newNodes.add(node.left)
                     newNodes.add(node.right)
                 } else {
-                    newNodes.add(null)
-                    newNodes.add(null)
+                    newNodes.add(Node.NIL)
+                    newNodes.add(Node.NIL)
                     output.print(" ")
                 }
 
@@ -45,17 +51,17 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             for (i in 1..endLines) {
                 for (j in nodes.indices) {
                     printWhitespaces(firstSpaces - i)
-                    if (nodes[j] == null) {
+                    if (nodes[j] == Node.NIL) {
                         printWhitespaces(endLines + endLines + i + 1)
                         continue
                     }
 
-                    if (nodes[j]?.left != null) output.print("/")
+                    if (nodes[j].left != Node.NIL) output.print("/")
                     else printWhitespaces(1)
 
                     printWhitespaces(i + i - 1)
 
-                    if (nodes[j]?.right != null) output.print("\\")
+                    if (nodes[j].right != Node.NIL) output.print("\\")
                     else printWhitespaces(1)
 
                     printWhitespaces(endLines + endLines - i)
@@ -73,7 +79,7 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             for (i in 0..<count) output.print(" ")
         }
 
-        private fun <T : Comparable<T>> maxLevel(node: Node<T>?): Int {
+        private fun maxLevel(node: Node?): Int {
             if (node == null) return 0
 
             return (max(
@@ -82,28 +88,28 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             ) + 1).toInt()
         }
 
-        private fun <T> isAllElementsNull(list: List<T?>): Boolean {
+        private fun isAllElementsNull(list: List<Node>): Boolean {
             for (`object` in list) {
-                if (`object` != null) return false
+                if (`object` != Node.NIL) return false
             }
 
             return true
         }
     }
 
-    override fun lookup(value: T): Boolean {
-        if (root == null) return false
+    override fun lookup(value: Int): Boolean {
+        if (root == Node.NIL) return false
 
-        fun traverse(current: Node<T>, compareTo: Node<T>): Boolean {
+        fun traverse(current: Node, compareTo: Node): Boolean {
             return if (compareTo > current) {
-                if (current.right != null) {
-                    traverse(current.right!!, compareTo)
+                if (current.right != Node.NIL) {
+                    traverse(current.right, compareTo)
                 } else {
                     false
                 }
             } else if (compareTo < current) {
-                if (current.left != null) {
-                    traverse(current.left!!, compareTo)
+                if (current.left != Node.NIL) {
+                    traverse(current.left, compareTo)
                 } else {
                     false
                 }
@@ -112,46 +118,115 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             }
         }
 
-        return traverse(root!!, Node(value, true))
+        return traverse(root, Node(value, Node.Color.BLACK))
     }
 
     override fun toString(): String {
         return BTreePrinter.printTree(this)
     }
 
-    class Node<T: Comparable<T>>(val value: T, var red: Boolean, var left: Node<T>? = null, var right: Node<T>? = null): Comparable<Node<T>> {
-        var black: Boolean
-            get() = !red
-            set(value) {
-                red = !value
+    private enum class Direction {
+        LEFT, RIGHT;
+
+        fun other(): Direction {
+            if (this == LEFT) {
+                return RIGHT
             }
-        override fun compareTo(other: Node<T>): Int {
-            return value.compareTo(other.value)
+
+            return LEFT
         }
     }
 
-    private var root: Node<T>? = null
+    private open class Node(open val value: Int, open var color: Color): Comparable<Node> {
+        var parent: Node? = null
+        enum class Color {
+            RED, BLACK
+        }
 
-    constructor(rootValue: T) : this() {
-        root = Node(rootValue, true)
+        object NIL: Node(Int.MAX_VALUE, Color.BLACK) { // special instance of Node to represent nil and is always black
+            override var color: Color
+                get() = Color.BLACK
+                set(_) {}
+
+            override fun compareTo(other: Node): Int {
+                throw IllegalStateException("cannot compare NIL node")
+            }
+
+            override fun equals(other: Any?): Boolean {
+                return other === this
+            }
+
+            override fun hashCode(): Int {
+                return 0
+            }
+        }
+
+        var left: Node = NIL
+        var right: Node  = NIL
+
+        override fun equals(other: Any?): Boolean {
+            if (other is NIL) {
+                return other == this
+            } else if (other is Node) { // node is equal if value is equal and children are equal
+                return (this.value == other.value) && (this.left == other.left) && (this.right == other.right)
+            }
+
+            return false
+        }
+
+        fun childAt(direction: Direction): Node {
+            if (direction == Direction.LEFT) {
+                return left
+            }
+
+            return right
+        }
+
+        fun setChildAt(direction: Direction, node: Node) {
+            if (direction == Direction.LEFT) {
+                left = node
+            } else {
+                right = node
+            }
+        }
+
+        override fun compareTo(other: Node): Int {
+            return value.compareTo(other.value)
+        }
+
+        override fun hashCode(): Int {
+            var result = value
+            result = 31 * result + color.hashCode()
+            result = 31 * result + left.hashCode()
+            result = 31 * result + right.hashCode()
+            return result
+        }
     }
 
-    override fun insert(value: T): Boolean {
-        val node = Node(value, true)
+    private var root: Node = Node.NIL
 
-        fun traverse(current: Node<T>, toInsert: Node<T>): Boolean {
+    constructor(rootValue: Int) : this() {
+        root = Node(rootValue, Node.Color.BLACK)
+    }
+
+    override fun insert(value: Int): Boolean {
+        val newNode = Node(value, Node.Color.RED)
+
+        fun traverse(current: Node, toInsert: Node): Boolean {
             if (toInsert > current) {
-                if (current.right != null) {
-                    return traverse(current.right!!, toInsert)
+                if (current.right != Node.NIL) {
+                    return traverse(current.right, toInsert)
                 } else {
                     current.right = toInsert
+                    toInsert.parent = current
                     return true
                 }
             } else if (toInsert < current) {
-                if (current.left != null) {
-                    return traverse(current.left!!, toInsert)
+                if (current.left != Node.NIL) {
+                    return traverse(current.left, toInsert)
                 } else {
                     current.left = toInsert
+                    toInsert.parent = current
                     return true
                 }
             } else { // node already exists
@@ -159,18 +234,94 @@ class RBTree<T: Comparable<T>>(): BinaryTree<T> {
             }
         }
 
-        if (root != null) {
-            val result = traverse(root!!, node)
-            resolveInvariants()
+        if (root != Node.NIL) {
+            val result = traverse(root, newNode)
+            insertFixup(newNode)
             return result
         } else {
-            root = node
+            root = newNode
             return true
         }
     }
 
 
-    private fun resolveInvariants() {
-        return
+    private fun insertFixup(inserted: Node) {
+        // copied this a little from the given python code
+        var z = inserted
+
+        while (z.parent?.color == Node.Color.RED) {
+            if (z.parent === z.parent?.parent?.left) { // if parent is left child
+                val y = z.parent!!.parent!!.right
+                if (y.color == Node.Color.RED) { // if uncle is red
+                    z.parent!!.color = Node.Color.BLACK
+                    y.color = Node.Color.BLACK
+                    z.parent!!.parent!!.color = Node.Color.RED
+                } else {
+                    if (z === z.parent!!.right) {
+                        z = z.parent!!
+                        rotate(z, Direction.LEFT)
+                    }
+                    z.parent!!.color = Node.Color.BLACK
+                    z.parent!!.parent?.color = Node.Color.RED
+                    rotate(z.parent!!.parent!!, Direction.RIGHT)
+                }
+            } else { // parent is right child
+                val y = z.parent?.parent?.left
+                if (y?.color == Node.Color.RED) { // if uncle is red
+                    z.parent!!.color = Node.Color.BLACK
+                    y.color = Node.Color.BLACK
+                    z.parent?.parent?.color = Node.Color.RED
+                    z = z.parent!!.parent!!
+                } else {
+                    if (z == z.parent!!.left) {
+                        z = z.parent!!
+                        rotate(z, Direction.RIGHT)
+                    }
+                    z.parent!!.color = Node.Color.BLACK
+                    z.parent?.parent?.color = Node.Color.RED
+                    z.parent?.parent?.run {rotate(z.parent!!.parent!!, Direction.LEFT) }
+                }
+            }
+
+            if (z == root) { // case 0
+                break
+            }
+        }
+
+        root.color = Node.Color.BLACK
+    }
+
+    private fun rotate(around: Node, direction: Direction) {
+        val y = around.childAt(direction.other())
+        around.setChildAt(direction.other(), y.childAt(direction))
+
+        if (y.childAt(direction) == Node.NIL) {
+            y.childAt(direction).parent = around
+        }
+
+        y.parent = around.parent
+
+        if (around.parent == null) {
+            root = y
+        } else if (around == around.parent?.left) {
+            around.parent?.left = y
+        } else {
+            around.parent?.right = y
+        }
+
+        y.setChildAt(direction, around)
+        around.parent = y
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other is RBTree) {
+            return root == other.root
+        }
+
+        return false
+    }
+
+    override fun hashCode(): Int {
+        return root.hashCode()
     }
 }
