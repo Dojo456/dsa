@@ -7,5 +7,5 @@ fun main() {
     tree.insert(5)
     tree.insert(-1)
 
-    println(tree.toString())
+    println(tree)
 }
